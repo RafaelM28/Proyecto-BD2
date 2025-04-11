@@ -8,7 +8,7 @@ python -m venv nombre_del_entorno  # Ej: python -m venv .venv
 para activarlo usamos:
 .\venv\Scripts\activate
 posteriormente podemos intstalar las librerias que deseemos y su version en el proyecto
-(para desactivarla usamos: desactive)
+(para desactivarla usamos: deactive)
 
 ## Instalación
  ------------------------ Para la conexion a la API ------------------------------------------
