@@ -22,6 +22,7 @@ variables de entorno
 ------------------------------------------------------------------------------------------------
 ## Ejecución
 -------------------- Para la conexion de la API ----------------------------------------------
+
 NOTA: Esta fue la forma en que lo realice, habra otras formas, sin embargo el uso del .env me parece el mas correcto
       el como llamemos los metodos y lo usemos puede depender de cada quien
 
