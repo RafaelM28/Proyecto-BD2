@@ -12,6 +12,7 @@ posteriormente podemos intstalar las librerias que deseemos y su version en el p
 
 ## Instalación
  ------------------------ Para la conexion a la API ------------------------------------------
+ 
 para la conexion a twitter (x) instalamos ejecutamos el siguiente comando:
 pip install tweepy  python-dotenv
 
@@ -40,7 +41,6 @@ cargamos las credenciales
 # Cargar credenciales desde .env
 load_dotenv()
 
-# Autenticación
 client = tweepy.Client(
     bearer_token=os.getenv("TWITTER_BEARER_TOKEN"),
     consumer_key=os.getenv("TWITTER_API_KEY"),
@@ -50,6 +50,10 @@ client = tweepy.Client(
 )
 
 creamos un metodo que nos permita hacer lo que deseemos
+
+
+# Autenticación
+
 ## Contribuciones
 
 Se aceptan contribuciones al proyecto. Para ello, debes de seguir estos pasos:
