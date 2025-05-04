@@ -1,0 +1,5 @@
+.env
+
+venv
+.venv/              # Entorno virtual (venv o pipenv)
+venv/               # Alternativa común
