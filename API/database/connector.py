@@ -1,21 +1,29 @@
 from pymongo import MongoClient
-import socket
+from pymongo.errors import ConnectionFailure
+import os
+from dotenv import load_dotenv
 
-client = MongoClient('localhost', 27017)
+load_dotenv()
 
-# Send a ping to confirm a successful connection
-try:
-
-    ping_result = client.admin.command('ping')
-    database_list = client.list_database_names()
-     # Comando ping devuelve {'ok': 1.0} si funciona
-    print(f"Respuesta del ping: {ping_result}")
-    print(f"Bases de datos disponibles: {database_list[:4]}...")
-    print("✅ ¡Conexión exitosa a MongoDB local!")
-except Exception as e:
-    print(f"❌ Error de conexión: {e}")
-finally:
-# Siempre cerrar la conexión
-    if 'client' in locals():
-        client.close()
-    print("Conexión cerrada")
+class MongoDB:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialize()
+        return cls._instance
+    
+    def _initialize(self):
+        self.client = MongoClient(
+            os.getenv('MONGO_URI', 'mongodb://localhost:27017'),
+            serverSelectionTimeoutMS=5000
+        )
+        try:
+            self.client.admin.command('ping')
+            print("✅ Conexión a MongoDB establecida")
+        except ConnectionFailure as e:
+            raise RuntimeError("Error al conectar a MongoDB") from e
+    
+    def get_db(self, db_name):
+        return self.client[db_name]
