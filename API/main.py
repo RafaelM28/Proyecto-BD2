@@ -1,7 +1,8 @@
 import os
 import tweepy
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import time
 
 load_dotenv()
 
@@ -46,7 +47,7 @@ def search_tweets(
             ],
             user_fields=["username", "verified"],
             expansions=["author_id"],
-            start_time=datetime.utcnow() - timedelta(days=days_ago)
+           start_time=datetime.now(timezone.utc) - timedelta(days=days_ago)
         )
 
         if not tweets.data:
@@ -78,9 +79,10 @@ if __name__ == "__main__":
     search_params = {
         "query": "(#USACHINA OR 'guerra comercial' OR 'conflicto comercial') (USA OR Estados Unidos) (China)",
         "max_tweets": 5,
-        "days_ago": 30,
+        "days_ago": 10,
         "language": "es"
     }
     
     print("🔍 Buscando tweets sobre conflicto USA-China...")
     search_tweets(**search_params)
+    time.sleep(5)
