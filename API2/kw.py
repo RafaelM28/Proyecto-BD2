@@ -1,22 +1,24 @@
 import os
 import tweepy
+import streamlit as st
 from dotenv import load_dotenv
 
-# Cargar credenciales desde .env
-load_dotenv("credencialesTwitter.env")
 
-# Verificar credenciales
+
+# Cargar credenciales
+load_dotenv(".env")
+
 BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
 API_KEY = os.getenv("TWITTER_API_KEY")
 API_SECRET = os.getenv("TWITTER_API_SECRET")
 ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
 ACCESS_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
 
-if not BEARER_TOKEN or not API_KEY or not API_SECRET or not ACCESS_TOKEN or not ACCESS_SECRET:
-    print("❌ Error: Falta una o más credenciales en el archivo .env")
-    exit() 
+if not all([BEARER_TOKEN, API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET]):
+    st.error("❌ Error: Falta una o más credenciales en el archivo .env")
+    st.stop()
 
-# Autenticación con Tweepy
+# Autenticación
 client = tweepy.Client(
     bearer_token=BEARER_TOKEN,
     consumer_key=API_KEY,
@@ -25,30 +27,37 @@ client = tweepy.Client(
     access_token_secret=ACCESS_SECRET
 )
 
-# Función para buscar tweets originales por palabra clave
-def search_tweets(keyword: str, max_tweets: int = 10):
-    try:
-        print(f"🔍 Buscando tweets originales con la palabra clave: {keyword}")
+# Interfaz de usuario
+st.set_page_config(page_title="Buscador de Tweets", layout="centered")
+st.title("🔍 Buscador de Post de X  🔍")
 
-        # Agregar filtros para excluir respuestas y retweets
-        query = f"{keyword} -is:reply -is:retweet"
+st.markdown("Ingresa una palabra clave para buscar tweets:")
 
-        response = client.search_recent_tweets(
-            query=query,
-            max_results=max_tweets,
-            tweet_fields=["created_at", "public_metrics"]
-        )
+keyword = st.text_input("Palabra clave", placeholder="Ej: guerra de aranceles")
+max_tweets = st.number_input("Máximo de post a para traer", min_value=1, max_value=100, value=10)
+buscar = st.button("Buscando Post en X 🔍")
 
-        if not response.data:
-            print("⚠️ No se encontraron tweets originales para esa palabra clave.")
-            return
-        
-        for tweet in response.data:
-            print(f"📅 {tweet.created_at}\n📝 {tweet.text}\n❤️ {tweet.public_metrics['like_count']} Likes\n---")
+# Resultado
+if buscar and keyword:
+    with st.spinner("Buscando tweets..."):
+        try:
+            query = f"{keyword} -is:reply -is:retweet lang:es"
 
-    except tweepy.TweepyException as e:
-        print(f"❌ Error en la API: {e}")
+            response = client.search_recent_tweets(
+                query=query,
+                max_results=max_tweets,
+                tweet_fields=["created_at", "public_metrics"]
+            )
 
-# Ejemplo de uso
-if __name__ == "__main__":
-    search_tweets("guerra de aranceles", max_tweets=10)  # Cambia la palabra clave
+            tweets = response.data
+
+            if not tweets:
+                st.warning("⚠️ No se encontraron tweets.")
+            else:
+                for tweet in tweets:
+                    st.markdown("---")
+                    st.markdown(f"📅 **Fecha:** {tweet.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
+                    st.markdown(f"📝 **Texto:** {tweet.text}")
+                    st.markdown(f"❤️ **Likes:** {tweet.public_metrics['like_count']}")
+        except tweepy.TweepyException as e:
+            st.error(f"❌ Error en la API de Twitter: {e}")
