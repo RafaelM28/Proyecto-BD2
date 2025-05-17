@@ -51,4 +51,4 @@ def search_tweets(keyword: str, max_tweets: int = 10):
 
 # Ejemplo de uso
 if __name__ == "__main__":
-    search_tweets("guerra de aranceles", max_tweets=10)  # Cambia la palabra clave
+    search_tweets("guerra de aranceles, trump", max_tweets=10)  # Cambia la palabra clave
