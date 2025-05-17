@@ -1,4 +1,4 @@
-from .connector import MongoDB
+from .connector import MongoDBConnector
 
 # Singleton accesible como database.mongo
-mongo = MongoDB()
+mongo = MongoDBConnector()
