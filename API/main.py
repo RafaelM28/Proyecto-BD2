@@ -38,7 +38,7 @@ def search_tweets(
         # Obtener tweets
         tweets = client.search_recent_tweets(
             query=search_query,
-            max_results=min(max_tweets, 100),  # Límite de la API
+            max_results=min(max_tweets, 20),  # Límite de la API
             tweet_fields=[
                 "created_at", 
                 "public_metrics", 
@@ -78,8 +78,8 @@ if __name__ == "__main__":
     # Ejemplo de búsqueda para guerra comercial USA-China
     search_params = {
         "query": "(#USACHINA OR 'guerra comercial' OR 'conflicto comercial') (USA OR Estados Unidos) (China)",
-        "max_tweets": 5,
-        "days_ago": 10,
+        "max_tweets": 10,
+        "days_ago": 6,
         "language": "es"
     }
     
