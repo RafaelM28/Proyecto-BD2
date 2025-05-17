@@ -79,7 +79,7 @@ if __name__ == "__main__":
     search_params = {
         "query": "(#USACHINA OR 'guerra comercial' OR 'conflicto comercial') (USA OR Estados Unidos) (China)",
         "max_tweets": 10,
-        "days_ago": 6,
+        "days_ago": 10,
         "language": "es"
     }
     
