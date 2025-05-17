@@ -3,6 +3,7 @@ import tweepy
 import streamlit as st
 from dotenv import load_dotenv
 from database.connector import MongoDBConnector
+from datetime import datetime
 
 
 # Cargar credenciales
@@ -20,11 +21,11 @@ if not all([BEARER_TOKEN, API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET]):
 
 # Autenticación
 client = tweepy.Client(
-    bearer_token=BEARER_TOKEN,
-    consumer_key=API_KEY,
-    consumer_secret=API_SECRET,
-    access_token=ACCESS_TOKEN,
-    access_token_secret=ACCESS_SECRET
+    bearer_token="AAAAAAAAAAAAAAAAAAAAAN7H0QEAAAAAybgv%2FPYBlXykkvxZC3TQFVAv2WQ%3Dhc41yEFtBphbQZ025R8tg1pAGSXdJoI7qJSwhW3FpgCykBTihF",
+    consumer_key="laZSmoXlGHHPMeEYZjiRSmJY2",
+    consumer_secret="TVq9BYmAZwTA11lURLDqEZPx2Lk3lAP9E7HDX995EA0x3owSqx",
+    access_token="739201544235683841-XG41v5IyOwvJRebjneiwhtKjiS1OU0b",
+    access_token_secret="4Ky6EX0YxbMvqrkuOWf0XlaYFLGvoRTm0IIKhoPgvHFD8"
 )
 
 # Conexión a MongoDB

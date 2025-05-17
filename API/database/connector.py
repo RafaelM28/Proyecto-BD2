@@ -70,6 +70,17 @@ class MongoDBConnector:
             print(f"Error al buscar datos: {e}")
             raise
     
+    def show_schema(self, collection_name: str, sample_size: int = 3):
+        """Muestra el esquema de los documentos basado en una muestra"""
+        docs = self.find_data(collection_name, {})[:sample_size]
+        if docs:
+            from collections import defaultdict
+            schema = defaultdict(set)
+            for doc in docs:
+                for field, value in doc.items():
+                    schema[field].add(type(value).__name__)
+            return dict(schema)
+    
     def close_connection(self):
         """Cierra la conexión con MongoDB"""
         self.client.close()
