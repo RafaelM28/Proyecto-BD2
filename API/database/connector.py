@@ -5,33 +5,34 @@ from datetime import datetime
 
 class MongoDBConnector:
     """
-    Clase para manejar la conexión y operaciones con MongoDB Atlas.
-    Proporciona métodos para interactuar con la base de datos.
+    Clase para manejar la conexión y operaciones con MongoDB local.
     """
     
-    def __init__(self): #Constructor
-        # Configuración directa (solo para desarrollo)
-        self.username = "pedrolp370"
-        self.password = "LeaL030502"
-        self.cluster_url = "gbdproject.ij90wxc.mongodb.net"
-        self.db_name = "gbdproject"
+    def __init__(self, db_name="gbdproject", host="localhost", port=27017):
+        # Configuración para conexión local
+        self.host = host
+        self.port = port
+        self.db_name = db_name
         
         # Establecer conexión al inicializar
         self.client = self._connect_to_db()
         self.db = self.client[self.db_name]
-    
+
     def _connect_to_db(self):
-        """Método privado para establecer la conexión"""
-        escaped_password = urllib.parse.quote_plus(self.password)
-        uri = f"mongodb+srv://{self.username}:{escaped_password}@{self.cluster_url}/?retryWrites=true&w=majority&appName={self.db_name}"
+        """Método privado para establecer la conexión local"""
+        uri = f"mongodb://{self.host}:{self.port}/"
         
         try:
-            client = MongoClient(uri, server_api=ServerApi('1'))
+            client = MongoClient(
+                uri,
+                serverSelectionTimeoutMS=5000  # Timeout más corto para local
+            )
+            # Verificación simple para conexión local
             client.admin.command('ping')
-            print("¡Conectado exitosamente a MongoDB Atlas!")
+            print("¡Conectado exitosamente a MongoDB local!")
             return client
         except Exception as e:
-            print(f"Error de conexión: {e}")
+            print(f"Error de conexión local: {e}")
             raise
     
     def list_databases(self):
