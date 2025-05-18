@@ -8,7 +8,7 @@ class MongoDBConnector:
     Clase para manejar la conexión y operaciones con MongoDB local.
     """
     
-    def __init__(self, db_name="gbdproject", host="localhost", port=27017):
+    def __init__(self, db_name="admin", host="localhost", port=27017):
         # Configuración para conexión local
         self.host = host
         self.port = port
@@ -56,16 +56,21 @@ class MongoDBConnector:
             print(f"Error al insertar datos: {e}")
             raise
     
-    def find_data(self, collection_name: str, query: dict = {}):
+    def find_data(self, collection_name: str, query: dict = {}, limit: int = 0):
         """
         Busca documentos en una colección
         :param collection_name: Nombre de la colección
-        :param query: Diccionario con el criterio de búsqueda
+        :param query: Diccionario con el criterio de búsqued
+        :param limit: Límite de documentos a retornar (0 para sin límite)
         :return: Lista de documentos encontrados
+        
         """
         try:
             collection = self.db[collection_name]
-            return list(collection.find(query))
+            cursor = collection.find(query) 
+            if limit > 0:
+                cursor = cursor.limit(limit)
+            return list(cursor)
         except Exception as e:
             print(f"Error al buscar datos: {e}")
             raise
