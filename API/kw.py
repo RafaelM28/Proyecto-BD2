@@ -7,25 +7,26 @@ from database.connector import MongoDBConnector
 from sentiment_analysis import run_sentiment_analysis
 
 # Cargar credenciales
-load_dotenv(".env")
+# load_dotenv(".env")
 
-BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
-API_KEY = os.getenv("TWITTER_API_KEY")
-API_SECRET = os.getenv("TWITTER_API_SECRET")
-ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
-ACCESS_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+# BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
+# API_KEY = os.getenv("TWITTER_API_KEY")
+# API_SECRET = os.getenv("TWITTER_API_SECRET")
+# ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
+# ACCESS_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
 
-if not all([BEARER_TOKEN, API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET]):
-    st.error("❌ Error: Falta una o más credenciales en el archivo .env")
-    st.stop()
+# if not all([BEARER_TOKEN, API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET]):
+#    st.error("❌ Error: Falta una o más credenciales en el archivo .env")
+#    st.stop()
 
+# Credenciales de Rafael
 # Autenticación con Tweepy
 client = tweepy.Client(
-    bearer_token=BEARER_TOKEN,
-    consumer_key=API_KEY,
-    consumer_secret=API_SECRET,
-    access_token=ACCESS_TOKEN,
-    access_token_secret=ACCESS_SECRET
+    bearer_token="AAAAAAAAAAAAAAAAAAAAAHBM1wEAAAAAdLT8muc6IEoWr9RjVrHDn7KgCbU%3DUJgOApG4Dl8miCHebrGc95bcBQC6OUeuf9jukCdQkoHSGRY6Hr",
+    consumer_key="qgoaPW6q8f5C0xhFCT1ZvqgSH",
+    consumer_secret="QZZGf3GPehvvgrukBWKiuv6jBJq9kVDaYw6uhZbz2MSvA42aiW",
+    access_token="1162955265156816898-QrxEowUvmSpIYSKI5g2ovScmKj0AV5",
+    access_token_secret="vismBF4LYx0PepuWOblGcN21feIRswyGxgeOEDf2lsJl0"
 )
 
 # Conexión a MongoDB
@@ -119,5 +120,5 @@ if analizar_sentimientos:
             st.subheader("🔍 Resultados del Análisis")
             st.write("**Sentimiento:**", res["sentiment"].output, res["sentiment"].probas)
             st.write("**Emoción:**", res["emotion"].output, res["emotion"].probas)
-            st.write("**Discurso de odio:**", res["hate_speech"].output, res["hate_speech"].probas)
-            st.write("**Contexto de odio:**", res["context_hate"].output, res["context_hate"].probas)
+            st.write("**Discurso de odio:**", res["hate_speech"].probas)
+            st.write("**Contexto de odio:**", res["context_hate"].probas)
