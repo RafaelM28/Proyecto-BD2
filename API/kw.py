@@ -5,22 +5,11 @@ from dotenv import load_dotenv
 from datetime import datetime
 from database.connector import MongoDBConnector
 from sentiment_analysis import run_sentiment_analysis
+from replies import get_tweets_with_top_replies
 
-# Cargar credenciales
-# load_dotenv(".env")
-
-# BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
-# API_KEY = os.getenv("TWITTER_API_KEY")
-# API_SECRET = os.getenv("TWITTER_API_SECRET")
-# ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
-# ACCESS_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
-
-# if not all([BEARER_TOKEN, API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET]):
-#    st.error("❌ Error: Falta una o más credenciales en el archivo .env")
-#    st.stop()
-
-# Credenciales de Rafael
-# Autenticación con Tweepy
+# =======================
+# Credenciales (Rafael)
+# =======================
 client = tweepy.Client(
     bearer_token="AAAAAAAAAAAAAAAAAAAAAHBM1wEAAAAAdLT8muc6IEoWr9RjVrHDn7KgCbU%3DUJgOApG4Dl8miCHebrGc95bcBQC6OUeuf9jukCdQkoHSGRY6Hr",
     consumer_key="qgoaPW6q8f5C0xhFCT1ZvqgSH",
@@ -29,96 +18,117 @@ client = tweepy.Client(
     access_token_secret="vismBF4LYx0PepuWOblGcN21feIRswyGxgeOEDf2lsJl0"
 )
 
-# Conexión a MongoDB
 db_connector = MongoDBConnector()
 
-def transform_tweet_to_dict(tweet, keyword):
-    """Convierte un objeto Tweet a un diccionario para MongoDB"""
-    return {
-        "tweet_id": str(tweet.id),
-        "text": tweet.text,
-        "created_at": tweet.created_at,
-        "author_id": str(tweet.author_id) if hasattr(tweet, 'author_id') else None,
-        "public_metrics": {
-            "like_count": tweet.public_metrics['like_count'],
-            "retweet_count": tweet.public_metrics['retweet_count'],
-            "reply_count": tweet.public_metrics['reply_count'],
-            "impression_count": tweet.public_metrics['impression_count']
-        },
-        "keyword": keyword,
-        "source": "twitter_api",
-        "inserted_at": datetime.now()
-    }
+# Configuración de Streamlit
+st.set_page_config(page_title="Buscador de X", layout="wide")
+st.title("🧠 Analizador de Posts de X (Twitter)")
 
-# Interfaz de usuario
-st.set_page_config(page_title="Buscador de Tweets", layout="centered")
-st.title("🔍 Buscador de Post de X")
+tab1, tab2, tab3 = st.tabs(["🔍 Buscar Tweets", "📊 Análisis de Sentimientos", "💬 Respuestas Populares"])
 
-st.markdown("Ingresa una palabra clave para buscar tweets:")
+# =======================
+# REQ 1 - Buscar Tweets
+# =======================
+with tab1:
+    st.subheader("🔍 Buscar y guardar tweets por palabra clave")
 
-keyword = st.text_input("Palabra clave", placeholder="Ej: guerra de aranceles")
-max_tweets = st.number_input("Máximo de post a traer", min_value=1, max_value=100, value=10)
-buscar = st.button("🔎 Buscar tweets")
+    keyword = st.text_input("Palabra clave", placeholder="Ej: inflación, elecciones")
+    max_tweets = st.number_input("Máximo de post a traer", min_value=1, max_value=100, value=10)
+    buscar = st.button("Buscar tweets")
 
-if buscar and keyword:
-    with st.spinner("Buscando tweets..."):
-        try:
-            query = f"{keyword} -is:reply -is:retweet lang:es"
+    def transform_tweet_to_dict(tweet, keyword):
+        return {
+            "tweet_id": str(tweet.id),
+            "text": tweet.text,
+            "created_at": tweet.created_at,
+            "author_id": str(tweet.author_id) if hasattr(tweet, 'author_id') else None,
+            "public_metrics": {
+                "like_count": tweet.public_metrics['like_count'],
+                "retweet_count": tweet.public_metrics['retweet_count'],
+                "reply_count": tweet.public_metrics.get('reply_count', 0),
+                "impression_count": tweet.public_metrics.get('impression_count', 0)
+            },
+            "keyword": keyword,
+            "source": "twitter_api",
+            "inserted_at": datetime.now()
+        }
 
-            response = client.search_recent_tweets(
-                query=query,
-                max_results=max_tweets,
-                tweet_fields=["created_at", "public_metrics", "author_id"],
-                expansions=["author_id"]
-            )
+    if buscar and keyword:
+        with st.spinner("Buscando tweets..."):
+            try:
+                query = f"{keyword} -is:reply -is:retweet lang:es"
+                response = client.search_recent_tweets(
+                    query=query,
+                    max_results=max_tweets,
+                    tweet_fields=["created_at", "public_metrics", "author_id"],
+                    expansions=["author_id"]
+                )
 
-            tweets = response.data
+                tweets = response.data
+                if not tweets:
+                    st.warning("⚠️ No se encontraron tweets.")
+                else:
+                    for tweet in tweets:
+                        data = transform_tweet_to_dict(tweet, keyword)
+                        db_connector.insert_data("tweets", data)
+                        st.markdown("---")
+                        st.markdown(f"📅 **{tweet.created_at.strftime('%Y-%m-%d %H:%M:%S')}**")
+                        st.markdown(f"📝 {tweet.text}")
+                        st.markdown(f"❤️ Likes: {tweet.public_metrics['like_count']}")
+                    st.success(f"✅ Se guardaron {len(tweets)} tweets.")
+            except Exception as e:
+                st.error(f"❌ Error al buscar tweets: {e}")
 
-            if not tweets:
-                st.warning("⚠️ No se encontraron tweets.")
-            else:
-                inserted_ids = []
-                for tweet in tweets:
-                    tweet_data = transform_tweet_to_dict(tweet, keyword)
-                    try:
-                        tweet_id = db_connector.insert_data("tweets", tweet_data)
-                        inserted_ids.append(tweet_id)
-                    except Exception as e:
-                        st.error(f"Error al guardar tweet: {e}")
-                        continue
+# =======================
+# REQ 2 - Sentiment Analysis
+# =======================
+with tab2:
+    st.subheader("📊 Análisis de sentimientos de los últimos tweets guardados")
+    if st.button("Ejecutar análisis de sentimientos"):
+        with st.spinner("Analizando..."):
+            try:
+                results = run_sentiment_analysis(limit=10)
+                if not results:
+                    st.warning("No hay tweets para analizar.")
+                else:
+                    for idx, res in enumerate(results, start=1):
+                        st.markdown("---")
+                        st.markdown(f"### 🐦 Tweet #{idx}")
+                        st.markdown(f"**Texto:** {res['tweet']}")
+                        st.markdown(f"**Palabra clave:** {res['keyword']}")
+                        st.markdown("#### Resultado del análisis")
+                        st.write("🧠 **Sentimiento:**", res["sentiment"].output, res["sentiment"].probas)
+                        st.write("🎭 **Emoción:**", res["emotion"].output, res["emotion"].probas)
+                        st.write("🧨 **Discurso de odio:**", res["hate_speech"].output, res["hate_speech"].probas)
+                        st.write("⚠️ **Contexto de odio:**", res["context_hate"].output, res["context_hate"].probas)
+            except Exception as e:
+                st.error(f"❌ Error en el análisis: {e}")
 
-                    st.markdown("---")
-                    st.markdown(f"📅 **Fecha:** {tweet.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
-                    st.markdown(f"📝 **Texto:** {tweet.text}")
-                    st.markdown(f"❤️ **Likes:** {tweet.public_metrics['like_count']}")
+# =======================
+# REQ 3 - Respuestas Populares
+# =======================
+with tab3:
+    st.subheader("💬 Respuestas más destacadas a un usuario")
 
-                st.success(f"✅ Se guardaron {len(inserted_ids)} tweets en la base de datos")
-        except tweepy.TweepyException as e:
-            st.error(f"❌ Error en la API de Twitter: {e}")
-
-# Botón para análisis de sentimientos
-analizar_sentimientos = st.button("Ejecutar Análisis de Sentimientos")
-
-if analizar_sentimientos:
-    st.info("Ejecutando análisis de sentimientos...")
-
-    try:
-        results = run_sentiment_analysis(limit=10)
-    except Exception as e:
-        st.error(f"Error al ejecutar el análisis: {e}")
-        results = []
-
-    if not results:
-        st.warning("No hay tweets para analizar.")
-    else:
-        for idx, res in enumerate(results, start=1):
-            st.markdown("---")
-            st.markdown(f"### 🐦 Tweet X #{idx}")
-            st.markdown(f"**Texto original:** {res['tweet']}")
-            st.markdown(f"**Palabra clave:** {res['keyword']}")
-
-            st.subheader("🔍 Resultados del Análisis")
-            st.write("**Sentimiento:**", res["sentiment"].output, res["sentiment"].probas)
-            st.write("**Emoción:**", res["emotion"].output, res["emotion"].probas)
-            st.write("**Discurso de odio:**", res["hate_speech"].probas)
-            st.write("**Contexto de odio:**", res["context_hate"].probas)
+    username = st.text_input("Usuario de X (sin @)", value="elonmusk")
+    cantidad = st.slider("Cantidad de tweets recientes a analizar", 1, 10, 5)
+    if st.button("Buscar respuestas populares"):
+        with st.spinner("Buscando respuestas..."):
+            try:
+                tweets_info = get_tweets_with_top_replies(username, cantidad)
+                if not tweets_info:
+                    st.warning("⚠️ No se encontraron tweets o respuestas.")
+                else:
+                    for t in tweets_info:
+                        st.markdown("----")
+                        st.markdown(f"📝 **Tweet:** {t['text']}")
+                        st.markdown(f"❤️ Likes: {t['likes']} | 🔁 Retweets: {t['retweets']}")
+                        if t["replies"]:
+                            st.markdown("#### Respuestas destacadas:")
+                            for r in t["replies"]:
+                                st.markdown(f"↪️ {r['text']}")
+                                st.markdown(f"❤️ {r['likes']} | 🔁 {r['retweets']}")
+                        else:
+                            st.markdown("😴 Sin respuestas destacadas.")
+            except Exception as e:
+                st.error(f"❌ Error al buscar respuestas: {e}")
