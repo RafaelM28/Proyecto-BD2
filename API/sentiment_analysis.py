@@ -83,8 +83,8 @@ def hashtags_mas_comunes(oraciones, n=5):
             db_connector.insert_data("hashtags_comunes", hashtag_dict)
         except Exception as e:
             print(f"Error al insertar hashtag {hashtag}: {e}")
-
-def run_sentiment_analysis(limit=20):
+            
+def run_sentiment_analysis(limit=30):
     db_connector = MongoDBConnector()
 
     try:
@@ -127,7 +127,7 @@ def run_sentiment_analysis(limit=20):
                 "hate_speech": result["hate_speech"].probas,
                 "context_hate": result["context_hate"].probas,
                 "keyword": tweet["keyword"],
-                "analisis_objetivo": "tweet"
+                "emotion_output": result["emotion"].output,
             }
             try:
                 db_connector.insert_data("analisis_sentimientos", result_bd)
